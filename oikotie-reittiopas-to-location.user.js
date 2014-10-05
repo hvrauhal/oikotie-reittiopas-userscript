@@ -3,7 +3,7 @@
 // @namespace   my-oikotie-api.herokuapp.com
 // @description Shows the reittiopas route to the on sale apartments
 // @include     http://asunnot.oikotie.fi/myytavat-asunnot*
-// @version     1.0
+// @version     1.1
 // @grant       GM_getValue
 // @grant       GM_setValue
 // ==/UserScript==
@@ -19,7 +19,7 @@ function insertUi() {
   routeTargetInput.type = "text";
   routeTargetInput.style.width = "300px";
   routeTargetInput.placeholder = "Matka-aikahaun kohdeosoite";
-  routeTargetInput.value = GM_getValue("toAddress");
+  routeTargetInput.value = GM_getValue("toAddress") || "";
   routeTargetInput.id = "routeInfoTargetAddress";
   routeTargetInput.oninput = (e) => { GM_setValue("toAddress", e.target.value)}
 
