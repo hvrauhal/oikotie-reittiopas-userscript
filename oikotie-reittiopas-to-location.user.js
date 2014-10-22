@@ -6,6 +6,7 @@
 // @version     1.1
 // @grant       GM_getValue
 // @grant       GM_setValue
+// @license     The MIT License (MIT); http://opensource.org/licenses/MIT
 // ==/UserScript==
 
 let locationApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=geocode&format=json&key=";
