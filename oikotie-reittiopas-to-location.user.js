@@ -96,11 +96,11 @@ function get(url) {
       if (req.status < 300) {
         resolve(req.response);
       } else {
-        reject(Error(req.statusText + " from url: " + url));
+        reject(new Error(req.statusText + " from url: " + url));
       }
     };
     req.onerror = () => {
-      reject(Error("Network Error"));
+      reject(new Error("Network Error"));
     };
     req.send();
   });
