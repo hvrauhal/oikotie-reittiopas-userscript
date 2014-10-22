@@ -83,7 +83,7 @@ function amendWithRouteInfo(elem, to) {
     aElem.href="http://reittiopas.fi/?from=" + routeDetails.fromCoords + "&to=" + routeDetails.toCoords;
     aElem.textContent = (parseInt(routeDetails.route[0][0].duration, 10) / 60) + " min " + routeDetails.toAddress;
     aElem.style.display = "inline-block";
-    aElem.style.background = "white";
+    aElem.style.background = "transparent";
     elem.querySelector(".price-extra").appendChild(aElem);
   });
 }
