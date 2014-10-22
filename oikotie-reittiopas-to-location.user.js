@@ -12,7 +12,7 @@
 let locationApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=geocode&format=json&key=";
 let routeApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=route&format=json&request=route&time=0900&timetype=arrival";
 
-insertUi()
+insertUi();
 
 function insertUi() {
   let routeDiv = document.createElement('div');
@@ -22,7 +22,9 @@ function insertUi() {
   routeTargetInput.placeholder = "Matka-aikahaun kohdeosoite";
   routeTargetInput.value = GM_getValue("toAddress") || "";
   routeTargetInput.id = "routeInfoTargetAddress";
-  routeTargetInput.oninput = (e) => { GM_setValue("toAddress", e.target.value)}
+  routeTargetInput.oninput = (e) => {
+    GM_setValue("toAddress", e.target.value)
+  };
 
   let amendButton = document.createElement('button');
   amendButton.id = "routeInfoAmendButton";
@@ -41,12 +43,12 @@ function insertUi() {
 function amendCardsWithRouteInfo() {
   var ongoingAmends = 0;
   let amendButton = document.querySelector("#routeInfoAmendButton");
-  let addressInput = document.querySelector('#routeInfoTargetAddress')
+  let addressInput = document.querySelector('#routeInfoTargetAddress');
   amendButton.setAttribute("disabled","true");
   addressInput.setAttribute("disabled","true");
   let address = addressInput.value;
-  getJson(locationApiPrefix + address).then((location) => {
-    let firstLocation = location[0];
+  getJson(locationApiPrefix + address).then((locations) => {
+    let firstLocation = locations[0];
     let location = {
       address: firstLocation.name + " " + (firstLocation.details && firstLocation.details.houseNumber || "")  + ",  " + firstLocation.city,
       coords: firstLocation.coords 
@@ -59,7 +61,7 @@ function amendCardsWithRouteInfo() {
           amendButton.removeAttribute("disabled");
           addressInput.removeAttribute("disabled");
         }
-      }
+      };
       amendWithRouteInfo(elem, location).then(doneFn).then(null, (e) => { console.error("caught", e); doneFn()});
     }
   })
