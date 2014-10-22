@@ -13,6 +13,7 @@ let locationApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=
 let routeApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=route&format=json&request=route&time=0900&timetype=arrival";
 
 insertUi();
+var myMapDiv;
 
 function insertUi() {
   let routeDiv = document.createElement('div');
@@ -37,6 +38,22 @@ function insertUi() {
   let controlElem = document.querySelector('#search-views .controls');
   controlElem.style.height = "45px";
   controlElem.appendChild(routeDiv);
+
+  myMapDiv = document.createElement('iframe');
+  myMapDiv.style.position ="fixed";
+  myMapDiv.style.height ="200px";
+  myMapDiv.style.width ="600px";
+  myMapDiv.style.left="0";
+  myMapDiv.style.top="0";
+  myMapDiv.style.zIndex="120000";
+  myMapDiv.style.background="lightgray";
+  myMapDiv.style.display="none";
+  myMapDiv.frameBorder=0;
+  myMapDiv.style.border="0";
+
+  document.querySelector('body').appendChild(myMapDiv)
+
+
 }
 
 
@@ -68,24 +85,42 @@ function amendCardsWithRouteInfo() {
 }
 
 function amendWithRouteInfo(elem, to) {
-  let cardAddress = (elem.querySelector(".address") && (elem.querySelector(".address").textContent + ', ') || "")  +
-    (elem.querySelector(".district") && elem.querySelector(".district").textContent.match(/,(.*)/)[1].trim() || "");
+  var addressElem = elem.querySelector(".address");
+  var districtElem = elem.querySelector(".district");
+  let cardAddress = (addressElem && (addressElem.textContent + ', ') || "") +
+    (districtElem && districtElem.textContent.match(/,(.*)/)[1].trim() || "");
   if (!cardAddress) return Promise.resolve("No card address");
-  let fromCoordsP = getJson(locationApiPrefix + cardAddress).then(locationRes => locationRes[0].coords);
-  let routeP = fromCoordsP.then(fromCoords => {
-    return getJson(routeApiPrefix + "&from=" + fromCoords + "&to=" + to.coords)
-      .then((routeResponse) => {
-        return {route:routeResponse, fromCoords: fromCoords, toCoords : to.coords, toAddress: to.address};
-      })
+
+  addressElem.style.cursor = "pointer";
+
+  addressElem.addEventListener('click', (e) => {
+    myMapDiv.src = "https://www.google.com/maps/embed/v1/place?key=AIzaSyCHm4XaOER6bNn2g8EXNjdAFzzB_XB46BM"
+      + "&q=" + cardAddress
+      + "&zoom=13";
+    myMapDiv.style.display = "block"
   });
-  return routeP.then((routeDetails) => {
-    let aElem = document.createElement("a"); 
-    aElem.href="http://reittiopas.fi/?from=" + routeDetails.fromCoords + "&to=" + routeDetails.toCoords;
+
+  return addRouteInfoAsync();
+
+  function addRouteInfoAsync() {
+    return getJson(locationApiPrefix + cardAddress)
+      .then(locationRes => locationRes[0].coords)
+      .then((fromCoords) => {
+        return getJson(routeApiPrefix + "&from=" + fromCoords + "&to=" + to.coords)
+          .then((routeResponse) => {
+            return {route: routeResponse, fromCoords: fromCoords, toCoords: to.coords, toAddress: to.address};
+          })
+      }).then(appendRouteInfo);
+  }
+
+  function appendRouteInfo(routeDetails) {
+    let aElem = document.createElement("a");
+    aElem.href = "http://reittiopas.fi/?from=" + routeDetails.fromCoords + "&to=" + routeDetails.toCoords;
     aElem.textContent = (parseInt(routeDetails.route[0][0].duration, 10) / 60) + " min " + routeDetails.toAddress;
     aElem.style.display = "inline-block";
     aElem.style.background = "transparent";
     elem.querySelector(".price-extra").appendChild(aElem);
-  });
+  }
 }
 
 function get(url) {
