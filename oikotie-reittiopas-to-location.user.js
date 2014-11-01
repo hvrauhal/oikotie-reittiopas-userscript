@@ -14,9 +14,15 @@ const routeApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=r
 
 insertUi();
 
+setInterval(amendUnamendedElems, 2000)
+
 let myMapDiv;
+let currentLocation;
 
 function insertUi() {
+  const controlElem = document.querySelector('#search-views .controls');
+  controlElem.style.height = "45px";
+
   const routeDiv = document.createElement('div');
   const routeTargetInput = document.createElement('input');
   routeTargetInput.type = "text";
@@ -24,21 +30,31 @@ function insertUi() {
   routeTargetInput.placeholder = "Matka-aikahaun kohdeosoite";
   routeTargetInput.value = GM_getValue("toAddress") || "";
   routeTargetInput.id = "routeInfoTargetAddress";
-  routeTargetInput.oninput = (e) => {
-    GM_setValue("toAddress", e.target.value)
-  };
-
-  const amendButton = document.createElement('button');
-  amendButton.id = "routeInfoAmendButton";
-  amendButton.textContent = "Näytä matka-ajat reittioppaan mukaan";
-  amendButton.onclick = amendCardsWithRouteInfo;
-  amendButton.style.cursor = "pointer";
   routeDiv.appendChild(routeTargetInput);
-  routeDiv.appendChild(amendButton);
 
-  const controlElem = document.querySelector('#search-views .controls');
-  controlElem.style.height = "45px";
   controlElem.appendChild(routeDiv);
+
+  routeTargetInput.oninput = (e) => {
+    GM_setValue("toAddress", e.target.value);
+    for (let cardContentElem of document.querySelectorAll(".cards .content")) {
+      cardContentElem.classList.remove('routing-ongoing');
+      cardContentElem.classList.remove('routing-done');
+      cardContentElem.querySelector('.price-extra').innerHTML = '';
+    }
+    fetchCurrentLocation(e.target.value);
+  };
+  if (routeTargetInput.value) {
+    routeTargetInput.dispatchEvent(new Event('input'));
+  }
+
+  const styles = document.createElement('style');
+  styles.type = "text/css";
+  styles.innerHTML =
+    ".extra-visibility .routing-done .price-extra a { color: white; }\n" +
+    ".routing-done .price-extra { background: transparent; }\n" +
+    ".routing-ongoing .price-extra {background: grey;}\n" +
+    "";
+  document.querySelector('body').appendChild(styles);
 
   myMapDiv = document.createElement('iframe');
   myMapDiv.style.position ="fixed";
@@ -53,36 +69,34 @@ function insertUi() {
   myMapDiv.style.border="0";
 
   document.querySelector('body').appendChild(myMapDiv)
-
-
 }
 
-
-function amendCardsWithRouteInfo() {
-  let ongoingAmends = 0;
-  const amendButton = document.querySelector("#routeInfoAmendButton");
-  const addressInput = document.querySelector('#routeInfoTargetAddress');
-  amendButton.setAttribute("disabled","true");
-  addressInput.setAttribute("disabled","true");
-  const address = addressInput.value;
+function fetchCurrentLocation(address) {
   getJson(locationApiPrefix + address).then((locations) => {
     const firstLocation = locations[0];
-    const location = {
+    currentLocation = {
       address: firstLocation.name + " " + (firstLocation.details && firstLocation.details.houseNumber || "")  + ",  " + firstLocation.city,
       coords: firstLocation.coords 
     };
-    for (let elem of document.querySelectorAll(".cards .content")) {
-      ongoingAmends = ongoingAmends + 1;
-      const doneFn = () => {
-        ongoingAmends = ongoingAmends - 1;
-        if (ongoingAmends === 0) {
-          amendButton.removeAttribute("disabled");
-          addressInput.removeAttribute("disabled");
-        }
-      };
-      amendWithRouteInfo(elem, location).then(doneFn).then(null, (e) => { console.error("caught", e); doneFn()});
-    }
-  })
+  });
+}
+
+function amendUnamendedElems() {
+  if (!currentLocation) {
+    return
+  }
+  var unamendedElems = document.querySelectorAll(".cards .content:not(.routing-ongoing):not(.routing-done)");
+  for (let elem of unamendedElems) {
+    elem.classList.add('routing-ongoing');
+    amendWithRouteInfo(elem, currentLocation)
+      .then(function (theElem) {
+        theElem.classList.remove('routing-ongoing');
+        theElem.classList.add('routing-done');
+      })
+      .then(null, (e) => {
+        console.error("caught", e);
+      });
+  }
 }
 
 function amendWithRouteInfo(elem, to) {
@@ -101,7 +115,7 @@ function amendWithRouteInfo(elem, to) {
     myMapDiv.style.display = "block"
   });
 
-  return addRouteInfoAsync();
+  return addRouteInfoAsync().then(function() { return elem; });
 
   function addRouteInfoAsync() {
     return getJson(locationApiPrefix + cardAddress)
@@ -119,8 +133,10 @@ function amendWithRouteInfo(elem, to) {
     aElem.href = "http://reittiopas.fi/?from=" + routeDetails.fromCoords + "&to=" + routeDetails.toCoords;
     aElem.textContent = (parseInt(routeDetails.route[0][0].duration, 10) / 60) + " min " + routeDetails.toAddress;
     aElem.style.display = "inline-block";
-    aElem.style.background = "transparent";
-    elem.querySelector(".price-extra").appendChild(aElem);
+    aElem.classList.add('route-link');
+    const targetParent = elem.querySelector(".price-extra");
+    targetParent.innerHTML = '';
+    targetParent.appendChild(aElem);
   }
 }
 
