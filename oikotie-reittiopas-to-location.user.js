@@ -9,15 +9,16 @@
 // @license     The MIT License (MIT); http://opensource.org/licenses/MIT
 // ==/UserScript==
 
-let locationApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=geocode&format=json&key=";
-let routeApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=route&format=json&request=route&time=0900&timetype=arrival";
+const locationApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=geocode&format=json&key=";
+const routeApiPrefix =  "http://my-oikotie-api.herokuapp.com/hsl/prod/?request=route&format=json&request=route&time=0900&timetype=arrival";
 
 insertUi();
-var myMapDiv;
+
+let myMapDiv;
 
 function insertUi() {
-  let routeDiv = document.createElement('div');
-  let routeTargetInput = document.createElement('input');
+  const routeDiv = document.createElement('div');
+  const routeTargetInput = document.createElement('input');
   routeTargetInput.type = "text";
   routeTargetInput.style.width = "300px";
   routeTargetInput.placeholder = "Matka-aikahaun kohdeosoite";
@@ -27,7 +28,7 @@ function insertUi() {
     GM_setValue("toAddress", e.target.value)
   };
 
-  let amendButton = document.createElement('button');
+  const amendButton = document.createElement('button');
   amendButton.id = "routeInfoAmendButton";
   amendButton.textContent = "Näytä matka-ajat reittioppaan mukaan";
   amendButton.onclick = amendCardsWithRouteInfo;
@@ -35,7 +36,7 @@ function insertUi() {
   routeDiv.appendChild(routeTargetInput);
   routeDiv.appendChild(amendButton);
 
-  let controlElem = document.querySelector('#search-views .controls');
+  const controlElem = document.querySelector('#search-views .controls');
   controlElem.style.height = "45px";
   controlElem.appendChild(routeDiv);
 
@@ -58,21 +59,21 @@ function insertUi() {
 
 
 function amendCardsWithRouteInfo() {
-  var ongoingAmends = 0;
-  let amendButton = document.querySelector("#routeInfoAmendButton");
-  let addressInput = document.querySelector('#routeInfoTargetAddress');
+  let ongoingAmends = 0;
+  const amendButton = document.querySelector("#routeInfoAmendButton");
+  const addressInput = document.querySelector('#routeInfoTargetAddress');
   amendButton.setAttribute("disabled","true");
   addressInput.setAttribute("disabled","true");
-  let address = addressInput.value;
+  const address = addressInput.value;
   getJson(locationApiPrefix + address).then((locations) => {
-    let firstLocation = locations[0];
-    let location = {
+    const firstLocation = locations[0];
+    const location = {
       address: firstLocation.name + " " + (firstLocation.details && firstLocation.details.houseNumber || "")  + ",  " + firstLocation.city,
       coords: firstLocation.coords 
     };
     for (let elem of document.querySelectorAll(".cards .content")) {
       ongoingAmends = ongoingAmends + 1;
-      let doneFn = () => {
+      const doneFn = () => {
         ongoingAmends = ongoingAmends - 1;
         if (ongoingAmends === 0) {
           amendButton.removeAttribute("disabled");
@@ -85,9 +86,9 @@ function amendCardsWithRouteInfo() {
 }
 
 function amendWithRouteInfo(elem, to) {
-  var addressElem = elem.querySelector(".address");
-  var districtElem = elem.querySelector(".district");
-  let cardAddress = (addressElem && (addressElem.textContent + ', ') || "") +
+  let addressElem = elem.querySelector(".address");
+  let districtElem = elem.querySelector(".district");
+  const cardAddress = (addressElem && (addressElem.textContent + ', ') || "") +
     (districtElem && districtElem.textContent.match(/,(.*)/)[1].trim() || "");
   if (!cardAddress) return Promise.resolve("No card address");
 
@@ -114,7 +115,7 @@ function amendWithRouteInfo(elem, to) {
   }
 
   function appendRouteInfo(routeDetails) {
-    let aElem = document.createElement("a");
+    const aElem = document.createElement("a");
     aElem.href = "http://reittiopas.fi/?from=" + routeDetails.fromCoords + "&to=" + routeDetails.toCoords;
     aElem.textContent = (parseInt(routeDetails.route[0][0].duration, 10) / 60) + " min " + routeDetails.toAddress;
     aElem.style.display = "inline-block";
@@ -125,7 +126,7 @@ function amendWithRouteInfo(elem, to) {
 
 function get(url) {
   return new Promise((resolve, reject) => {
-    let req = new XMLHttpRequest();
+    const req = new XMLHttpRequest();
     req.open('GET', url, true);
     req.onload = () => {
       if (req.status < 300) {
