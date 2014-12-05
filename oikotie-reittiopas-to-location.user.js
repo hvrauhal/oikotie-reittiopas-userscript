@@ -39,7 +39,8 @@ function insertUi() {
     for (let cardContentElem of document.querySelectorAll(".cards .content")) {
       cardContentElem.classList.remove('routing-ongoing');
       cardContentElem.classList.remove('routing-done');
-      cardContentElem.querySelector('.price-extra').innerHTML = '';
+      const targetElem = cardContentElem.querySelector('.price-extra');
+      if(targetElem) targetElem.innerHTML = '';
     }
     fetchCurrentLocation(e.target.value);
   };
